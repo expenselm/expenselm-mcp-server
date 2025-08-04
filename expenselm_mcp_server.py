@@ -8,6 +8,7 @@ from fastmcp import FastMCP
 from datetime import date
 
 _EXPENSELM_API_ENDPOINT="https://api.expenselm.ai"
+_EXPENSELM_TIMEOUT=60.0 # seconds
 
 class ExpenseImageType(str, Enum):
     Receipt = "Receipt"
@@ -119,7 +120,7 @@ def _get_headers() -> dict[str, str]:
     }
 
 @mcp.tool
-def get_latest_expenses(
+async def get_latest_expenses(
         skip: int = 0, 
         limit: int = 10,
         from_date: Optional[str] = None,
@@ -155,8 +156,8 @@ def get_latest_expenses(
     if text_input:
         search_params["text_input"] = text_input
 
-    with httpx.Client() as client: 
-        r = client.get(
+    async with httpx.AsyncClient(timeout=_EXPENSELM_TIMEOUT) as client: 
+        r = await client.get(
                 api_endpoint, 
                 headers=_get_headers(),
                 params=search_params
@@ -168,7 +169,7 @@ def get_latest_expenses(
     return expenses
 
 @mcp.tool
-def get_expense_by_id(
+async def get_expense_by_id(
         id: str
     ) -> ExpenseImageData:
     """
@@ -182,8 +183,8 @@ def get_expense_by_id(
     """
     api_endpoint = f"{_EXPENSELM_API_ENDPOINT}/expenses/{id}"
 
-    with httpx.Client() as client: 
-        r = client.get(
+    async with httpx.AsyncClient(timeout=_EXPENSELM_TIMEOUT) as client: 
+        r = await client.get(
                 api_endpoint, 
                 headers=_get_headers()
             )
@@ -193,7 +194,7 @@ def get_expense_by_id(
     return expense_image_data
 
 @mcp.tool
-def get_latest_subscription_expenses(
+async def get_latest_subscription_expenses(
         skip: int = 0, 
         limit: int = 10,
         from_date: Optional[str] = None,
@@ -229,8 +230,8 @@ def get_latest_subscription_expenses(
     if text_input:
         search_params["text_input"] = text_input
 
-    with httpx.Client() as client: 
-        r = client.get(
+    async with httpx.AsyncClient(timeout=_EXPENSELM_TIMEOUT) as client: 
+        r = await client.get(
                 api_endpoint, 
                 headers=_get_headers(),
                 params=search_params
@@ -242,7 +243,7 @@ def get_latest_subscription_expenses(
     return expenses
 
 @mcp.tool
-def get_expense_summary_by_month_by_currency(
+async def get_expense_summary_by_month_by_currency(
         from_date: str,
         to_date: str
     ) -> list[MonthCurAmtStatItem]:
@@ -263,8 +264,8 @@ def get_expense_summary_by_month_by_currency(
         "to_date": to_date,
     }
 
-    with httpx.Client() as client: 
-        r = client.get(
+    async with httpx.AsyncClient(timeout=_EXPENSELM_TIMEOUT) as client: 
+        r = await client.get(
                 api_endpoint, 
                 headers=_get_headers(),
                 params=search_params
@@ -276,7 +277,7 @@ def get_expense_summary_by_month_by_currency(
     return expense_stats
 
 @mcp.tool
-def get_expense_summary_by_category_by_currency(
+async def get_expense_summary_by_category_by_currency(
         from_date: str,
         to_date: str
     ) -> list[CategoryCurAmtStatItem]:
@@ -297,8 +298,8 @@ def get_expense_summary_by_category_by_currency(
         "to_date": to_date,
     }
 
-    with httpx.Client() as client: 
-        r = client.get(
+    async with httpx.AsyncClient(timeout=_EXPENSELM_TIMEOUT) as client: 
+        r = await client.get(
                 api_endpoint, 
                 headers=_get_headers(),
                 params=search_params
@@ -310,7 +311,7 @@ def get_expense_summary_by_category_by_currency(
     return expense_stats
 
 @mcp.tool
-def get_expense_summary_by_subscription_by_currency(
+async def get_expense_summary_by_subscription_by_currency(
         from_date: str,
         to_date: str
     ) -> list[SubscriptionCurAmtStatItem]:
@@ -331,8 +332,8 @@ def get_expense_summary_by_subscription_by_currency(
         "to_date": to_date,
     }
 
-    with httpx.Client() as client: 
-        r = client.get(
+    async with httpx.AsyncClient(timeout=_EXPENSELM_TIMEOUT) as client: 
+        r = await client.get(
                 api_endpoint, 
                 headers=_get_headers(),
                 params=search_params
