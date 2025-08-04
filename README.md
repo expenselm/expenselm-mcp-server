@@ -31,7 +31,7 @@ Add the following into your config file.
 ```json
 {
   "mcpServers": {
-    "expense-server": {
+    "expenselm": {
       "command": "uv",
       "args": [
         "run",
