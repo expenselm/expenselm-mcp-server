@@ -1,14 +1,20 @@
 from enum import Enum
-from typing import Optional
+from typing import Optional, Any
 from pydantic import BaseModel, Field
 import os
 import httpx
 from pydantic import TypeAdapter
 from fastmcp import FastMCP
 from datetime import date
+import base64
+import logging
 
 _EXPENSELM_API_ENDPOINT="https://api.expenselm.ai"
 _EXPENSELM_TIMEOUT=60.0 # seconds
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class ExpenseImageType(str, Enum):
     Receipt = "Receipt"
@@ -92,6 +98,18 @@ class SubscriptionCurAmtStatItem(BaseModel):
     subscription: str
     currency: str
     total_amount: float
+
+class ImageDownloadRequest(BaseModel):
+    expense_id: str
+    thumbnail: Optional[bool] = False
+
+class ImageDownloadResponse(BaseModel):
+    expense_id: str
+    image_data: str  # base64 encoded image
+    content_type: str
+    filename: str
+    is_thumbnail: bool
+    size_bytes: int
 
 mcp = FastMCP(name="Expense Assistant")
 
@@ -343,6 +361,174 @@ async def get_expense_summary_by_subscription_by_currency(
         expense_stats = adapter.validate_python(r.json())
 
     return expense_stats
+
+@mcp.tool()
+async def download_expense_receipt_image(
+    expense_id: str,
+    thumbnail: bool = False,
+) -> dict[str, Any]:
+    """
+    Download an expense receipt image from the backend API.
+    
+    Args:
+        expense_id: The ID of the expense to download the receipt image for
+        thumbnail: Whether to download the thumbnail version (default: False)
+    
+    Returns:
+        dict containing the image data (base64 encoded), content type, and metadata
+    """
+    try:
+        # Construct the API endpoint URL
+        url = f"{_EXPENSELM_API_ENDPOINT}/expenses/{expense_id}/receipt-image"
+        
+        # Prepare headers
+        headers = _get_headers()
+        
+        # Prepare query parameters
+        params = {}
+        if thumbnail:
+            params["thumbnail"] = "true"
+        
+        logger.info(f"Downloading receipt image for expense: {expense_id}, thumbnail: {thumbnail}")
+        
+        # Make the HTTP request
+        async with httpx.AsyncClient(timeout=_EXPENSELM_TIMEOUT) as client:
+            response = await client.get(url, headers=headers, params=params)
+            
+            # Handle HTTP errors
+            if response.status_code == 404:
+                return {
+                    "success": False,
+                    "error": f"Receipt image not found for expense ID: {expense_id}",
+                    "error_code": "IMAGE_NOT_FOUND"
+                }
+            elif response.status_code == 403:
+                return {
+                    "success": False,
+                    "error": "Not authorized to access this expense",
+                    "error_code": "FORBIDDEN"
+                }
+            elif response.status_code != 200:
+                return {
+                    "success": False,
+                    "error": f"HTTP {response.status_code}: {response.text}",
+                    "error_code": "HTTP_ERROR"
+                }
+            
+            # Get image content
+            image_bytes = response.content
+            content_type = response.headers.get("content-type", "application/octet-stream")
+            
+            # Encode image to base64
+            image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+            
+            # Extract filename from content-disposition header if available
+            filename = "receipt_image"
+            content_disposition = response.headers.get("content-disposition")
+            if content_disposition and "filename=" in content_disposition:
+                filename = content_disposition.split("filename=")[-1].strip('"')
+            
+            # Determine file extension from content type
+            if content_type.startswith("image/"):
+                extension = content_type.split("/")[-1]
+                if extension in ["jpeg", "jpg", "png", "gif", "webp"]:
+                    filename = f"{filename}.{extension}"
+            
+            logger.info(f"Successfully downloaded image: {len(image_bytes)} bytes, content-type: {content_type}")
+            
+            return {
+                "success": True,
+                "expense_id": expense_id,
+                "image_data": image_base64,
+                "content_type": content_type,
+                "filename": filename,
+                "is_thumbnail": thumbnail,
+                "size_bytes": len(image_bytes),
+                "encoding": "base64"
+            }
+            
+    except httpx.TimeoutException:
+        logger.error(f"Timeout while downloading image for expense: {expense_id}")
+        return {
+            "success": False,
+            "error": "Request timeout while downloading image",
+            "error_code": "TIMEOUT"
+        }
+    except httpx.RequestError as e:
+        logger.error(f"Request error while downloading image for expense: {expense_id}: {e}")
+        return {
+            "success": False,
+            "error": f"Request error: {str(e)}",
+            "error_code": "REQUEST_ERROR"
+        }
+    except Exception as e:
+        logger.error(f"Unexpected error while downloading image for expense: {expense_id}: {e}")
+        return {
+            "success": False,
+            "error": f"Unexpected error: {str(e)}",
+            "error_code": "UNEXPECTED_ERROR"
+        }
+
+@mcp.tool()
+async def save_expense_receipt_image(
+    expense_id: str,
+    save_path: str,
+    thumbnail: bool = False
+) -> dict[str, Any]:
+    """
+    Download and save an expense receipt image to a local file.
+    
+    Args:
+        expense_id: The ID of the expense to download the receipt image for
+        save_path: Local file path where the image should be saved
+        thumbnail: Whether to download the thumbnail version (default: False)
+    
+    Returns:
+        dict containing success status and file information
+    """
+    try:
+        # First download the image
+        download_result = await download_expense_receipt_image(
+            expense_id=expense_id,
+            thumbnail=thumbnail
+        ) # type: ignore
+        
+        if not download_result.get("success"):
+            return download_result
+        
+        # Decode base64 image data
+        image_data = download_result["image_data"]
+        image_bytes = base64.b64decode(image_data)
+        
+        # Save to file
+        with open(save_path, "wb") as f:
+            f.write(image_bytes)
+        
+        logger.info(f"Successfully saved image to: {save_path}")
+        
+        return {
+            "success": True,
+            "expense_id": expense_id,
+            "file_path": save_path,
+            "content_type": download_result["content_type"],
+            "is_thumbnail": thumbnail,
+            "size_bytes": len(image_bytes)
+        }
+        
+    except IOError as e:
+        logger.error(f"Failed to save image to {save_path}: {e}")
+        return {
+            "success": False,
+            "error": f"Failed to save file: {str(e)}",
+            "error_code": "FILE_SAVE_ERROR"
+        }
+    except Exception as e:
+        logger.error(f"Unexpected error while saving image: {e}")
+        return {
+            "success": False,
+            "error": f"Unexpected error: {str(e)}",
+            "error_code": "UNEXPECTED_ERROR"
+        }
 
 if __name__ == "__main__":
     mcp.run()
