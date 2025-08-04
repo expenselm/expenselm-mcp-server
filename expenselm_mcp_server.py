@@ -77,6 +77,21 @@ class ExpenseSearchRequest(BaseModel):
     from_date: Optional[date] = Field(None, description="Start date for filtering (YYYY-MM-DD)")
     to_date: Optional[date] = Field(None, description="End date for filtering (YYYY-MM-DD)")
 
+class MonthCurAmtStatItem(BaseModel):
+    month: str
+    currency: str
+    total_amount: float
+
+class CategoryCurAmtStatItem(BaseModel):
+    category: str
+    currency: str
+    total_amount: float
+
+class SubscriptionCurAmtStatItem(BaseModel):
+    subscription: str
+    currency: str
+    total_amount: float
+
 mcp = FastMCP(name="Expense Assistant")
 
 def _get_api_key() -> str:
@@ -153,6 +168,31 @@ def get_latest_expenses(
     return expenses
 
 @mcp.tool
+def get_expense_by_id(
+        id: str
+    ) -> ExpenseImageData:
+    """
+    Get an expense record by id.
+
+    Args:
+        id: The id of the expense.
+    
+    Returns:
+        ExpenseImageData: The expense record.
+    """
+    api_endpoint = f"{_EXPENSELM_API_ENDPOINT}/expenses/{id}"
+
+    with httpx.Client() as client: 
+        r = client.get(
+                api_endpoint, 
+                headers=_get_headers()
+            )
+
+        expense_image_data = ExpenseImageData.model_validate_json(r.json())
+
+    return expense_image_data
+
+@mcp.tool
 def get_latest_subscription_expenses(
         skip: int = 0, 
         limit: int = 10,
@@ -200,6 +240,108 @@ def get_latest_subscription_expenses(
         expenses = adapter.validate_python(r.json())
 
     return expenses
+
+@mcp.tool
+def get_expense_summary_by_month_by_currency(
+        from_date: str,
+        to_date: str
+    ) -> list[MonthCurAmtStatItem]:
+    """
+    Get expense summary by month and currency for the provided period.
+
+    Args:
+        from_date (required): The start date for filtering. Format is YYYY-MM-DD.
+        to_date (required): The end date for filtering. Format is YYYY-MM-DD.
+    
+    Returns:
+        list[MonthCurAmtStatItem]: The expense summary by month and currency. For month, the format is YYYY-MM.
+    """
+    api_endpoint = f"{_EXPENSELM_API_ENDPOINT}/stats/summary-by-month-by-currency"
+
+    search_params: dict[str, str] = {
+        "from_date": from_date,
+        "to_date": to_date,
+    }
+
+    with httpx.Client() as client: 
+        r = client.get(
+                api_endpoint, 
+                headers=_get_headers(),
+                params=search_params
+            )
+
+        adapter = TypeAdapter(list[MonthCurAmtStatItem])
+        expense_stats = adapter.validate_python(r.json())
+
+    return expense_stats
+
+@mcp.tool
+def get_expense_summary_by_category_by_currency(
+        from_date: str,
+        to_date: str
+    ) -> list[CategoryCurAmtStatItem]:
+    """
+    Get expense summary by category and currency for the provided period.
+
+    Args:
+        from_date (required): The start date for filtering. Format is YYYY-MM-DD.
+        to_date (required): The end date for filtering. Format is YYYY-MM-DD.
+    
+    Returns:
+        list[CategoryCurAmtStatItem]: The expense summary by category and currency.
+    """
+    api_endpoint = f"{_EXPENSELM_API_ENDPOINT}/stats/summary-by-category-by-currency"
+
+    search_params: dict[str, str] = {
+        "from_date": from_date,
+        "to_date": to_date,
+    }
+
+    with httpx.Client() as client: 
+        r = client.get(
+                api_endpoint, 
+                headers=_get_headers(),
+                params=search_params
+            )
+
+        adapter = TypeAdapter(list[CategoryCurAmtStatItem])
+        expense_stats = adapter.validate_python(r.json())
+
+    return expense_stats
+
+@mcp.tool
+def get_expense_summary_by_subscription_by_currency(
+        from_date: str,
+        to_date: str
+    ) -> list[SubscriptionCurAmtStatItem]:
+    """
+    Get expense summary by subscription and currency for the provided period.
+
+    Args:
+        from_date (required): The start date for filtering. Format is YYYY-MM-DD.
+        to_date (required): The end date for filtering. Format is YYYY-MM-DD.
+    
+    Returns:
+        list[SubscriptionCurAmtStatItem]: The expense summary by subscription and currency.
+    """
+    api_endpoint = f"{_EXPENSELM_API_ENDPOINT}/stats/summary-by-subscription-by-currency"
+
+    search_params: dict[str, str] = {
+        "from_date": from_date,
+        "to_date": to_date,
+    }
+
+    with httpx.Client() as client: 
+        r = client.get(
+                api_endpoint, 
+                headers=_get_headers(),
+                params=search_params
+            )
+
+        adapter = TypeAdapter(list[SubscriptionCurAmtStatItem])
+        expense_stats = adapter.validate_python(r.json())
+
+    return expense_stats
 
 if __name__ == "__main__":
     mcp.run()
