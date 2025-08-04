@@ -530,5 +530,14 @@ async def save_expense_receipt_image(
             "error_code": "UNEXPECTED_ERROR"
         }
 
+def main():
+    """Main entry point for the ExpenseLM MCP service."""
+    try:
+        logger.info("Starting ExpenseLM MCP service")
+        mcp.run(transport="stdio")
+    except Exception as e:
+        logger.error(f"Error starting ExpenseLM MCP service: {str(e)}")
+        raise
+
 if __name__ == "__main__":
-    mcp.run()
+    main()
