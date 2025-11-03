@@ -1,0 +1,29 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
+  "name": "io.github.clarenceh/expenselm-mcp-server",
+  "description": "An MCP server that provides access to your expense data on ExpenseLM.",
+  "repository": {
+    "url": "https://github.com/expenselm/expenselm-mcp-server",
+    "source": "github"
+  },
+  "version": "0.2.2",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "expenselm-mcp-server",
+      "version": "0.2.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "description": "Your ExpenseLM API key",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true,
+          "name": "EXPENSELM_API_KEY"
+        }
+      ]
+    }
+  ]
+}
