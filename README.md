@@ -6,6 +6,8 @@ MCP server for [ExpenseLM](https://expenselm.ai).
 
 ExpenseLM is an easy to use, GenAI powered Expense Management application. From expense recording to expense insights and advice, ExpenseLM puts you in control of your money like never before. MCP server enables access to your expense data with your favorite AI Agent.
 
+mcp-name: io.github.clarenceh/expenselm-mcp-server
+
 ## Installation
 
 ### Prerequisites
