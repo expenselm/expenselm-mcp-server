@@ -76,3 +76,8 @@ Add the following into your config file (replace the value of EXPENSELM_API_KEY 
 * Enter ExpenseLM MCP Server configuration like the below screenshot. Replace the environment variable "EXPENSELM_API_KEY" with your own key.
 
 ![Perplexity setup](images/perplexity-mcp-config.png)
+
+## Publish new version
+
+* [PyPI package](PYPI.md)
+* [MCP Server Registry](MCP_SERVER.md)
