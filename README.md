@@ -4,6 +4,8 @@
 
 MCP server for [ExpenseLM](https://expenselm.ai).
 
+ExpenseLM is an easy to use, GenAI powered Expense Management application. From expense recording to expense insights and advice, ExpenseLM puts you in control of your money like never before. MCP server enables access to your expense data with your favorite AI Agent.
+
 ## Installation
 
 ### Prerequisites
@@ -20,7 +22,7 @@ Add the following MCP server in your Claude Desktop configuration.
 
 Config file (create if not exists): ~/Library/Application Support/Claude/claude_desktop_config.json
 
-Add the following into your config file.
+Add the following into your config file (replace the value of EXPENSELM_API_KEY with your own key).
 
 ```json
 {
@@ -31,7 +33,7 @@ Add the following into your config file.
         "expenselm-mcp-server"
       ],
       "env": {
-        "EXPENSELM_API_KEY": "Your ExpenseLM API Key",
+        "EXPENSELM_API_KEY": "Replace with your ExpenseLM API Key",
         "MCP_TIMEOUT": "200000"
       }
     }
@@ -45,7 +47,7 @@ Add the following MCP server in your Claude Desktop configuration.
 
 Config file (create if not exists): %AppData%\Claude\claude_desktop_config.json (e.g. C:\Users\[YourUsername]\AppData\Roaming\Claude\claude_desktop_config.json)
 
-Add the following into your config file.
+Add the following into your config file (replace the value of EXPENSELM_API_KEY with your own key).
 
 ```json
 {
@@ -58,10 +60,17 @@ Add the following into your config file.
         "expenselm-mcp-server"
       ],
       "env": {
-        "EXPENSELM_API_KEY": "Your ExpenseLM API Key",
+        "EXPENSELM_API_KEY": "Replace with your ExpenseLM API Key",
         "MCP_TIMEOUT": "200000"
       }
     }
   }
 }
 ```
+
+### Perplexity Desktop (Mac)
+
+* In Perplexity Desktop for Mac, navigate to "Settings" -> "Connectors". Click "Add Connector".
+* Enter ExpenseLM MCP Server configuration like the below screenshot. Replace the environment variable "EXPENSELM_API_KEY" with your own key.
+
+![Perplexity setup](images/perplexity-mcp-config.png)
