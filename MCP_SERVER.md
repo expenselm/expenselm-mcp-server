@@ -16,3 +16,9 @@ mcp-publisher login github
 ```bash
 mcp-publisher publish
 ```
+
+* Verify package
+
+```bash
+curl "https://registry.modelcontextprotocol.io/v0/servers?search=io.github.clarenceh/expenselm-mcp-server" | jq
+```

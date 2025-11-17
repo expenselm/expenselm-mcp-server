@@ -134,7 +134,8 @@ def _get_headers() -> dict[str, str]:
         dict[str, str]: The headers.
     """
     return {
-        "EXPENSELM_API_KEY": _get_api_key()
+        "EXPENSELM_API_KEY": _get_api_key(),
+        "X_CLIENT_TYPE": "mcp"
     }
 
 @mcp.tool
