@@ -575,6 +575,50 @@ async def get_expense_count_by_period(
 
     return expense_count
 
+@mcp.tool
+async def get_subscription_expense_count_by_period(
+        from_date: str,
+        to_date: str
+    ) -> int:
+    """
+    Get subscription based expense count for the provided period.
+
+    Example usage: 
+    When user want to perform analytics of subscription based 
+    expenses for a period, first use this method to
+    get the count of total subscription based expenses first. 
+    Then can use the get_latest_subscription_expenses
+    tool to fetch the expenses by page to get all records.
+
+    Args:
+        from_date (required): The start date for filtering. Format is YYYY-MM-DD.
+        to_date (required): The end date for filtering. Format is YYYY-MM-DD.
+    
+    Returns:
+        int: The count of subscription based expense reocrds for the period.
+    """
+    api_endpoint = f"{_EXPENSELM_API_ENDPOINT}/stats/subscription-expense-count-by-period"
+
+    search_params: dict[str, str] = {
+        "from_date": from_date,
+        "to_date": to_date,
+    }
+
+    async with httpx.AsyncClient(timeout=_EXPENSELM_TIMEOUT) as client: 
+        r = await client.get(
+                api_endpoint, 
+                headers=_get_headers(),
+                params=search_params
+            )
+        
+        r.raise_for_status()
+
+        # The response is a raw integer, so we read the text and cast it to int.
+        # Using r.text instead of r.json()
+        expense_count = int(r.text)
+
+    return expense_count
+
 def main():
     """Main entry point for the ExpenseLM MCP service."""
     try:
