@@ -6,12 +6,12 @@
     "url": "https://github.com/expenselm/expenselm-mcp-server",
     "source": "github"
   },
-  "version": "0.2.3",
+  "version": "0.3.0",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "expenselm-mcp-server",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "transport": {
         "type": "stdio"
       },
