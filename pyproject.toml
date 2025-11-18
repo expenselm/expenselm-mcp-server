@@ -1,6 +1,6 @@
 [project]
 name = "expenselm-mcp-server"
-version = "0.3.0"
+version = "0.3.1"
 description = "ExpenseLM MCP Server"
 readme = "README.md"
 requires-python = ">=3.12"
