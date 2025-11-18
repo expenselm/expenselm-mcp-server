@@ -149,6 +149,8 @@ async def get_latest_expenses(
     """
     Get the latest expense records.
 
+    Also for searching expenses by the provided criterias.
+
     Args:
         skip (int): The number of records to skip. Default is 0.
         limit (int): The maximum number of records to return. Default is 10.
@@ -530,6 +532,48 @@ async def save_expense_receipt_image(
             "error": f"Unexpected error: {str(e)}",
             "error_code": "UNEXPECTED_ERROR"
         }
+    
+@mcp.tool
+async def get_expense_count_by_period(
+        from_date: str,
+        to_date: str
+    ) -> int:
+    """
+    Get expense count for the provided period.
+
+    Example usage: 
+    When user want to perform analytics for a period, first use this method to
+    get the count of total expenses first. Then can use the get_latest_expenses
+    tool to fetch the expenses by page to get all records.
+
+    Args:
+        from_date (required): The start date for filtering. Format is YYYY-MM-DD.
+        to_date (required): The end date for filtering. Format is YYYY-MM-DD.
+    
+    Returns:
+        int: The count of expense reocrds for the period.
+    """
+    api_endpoint = f"{_EXPENSELM_API_ENDPOINT}/stats/expense-count-by-period"
+
+    search_params: dict[str, str] = {
+        "from_date": from_date,
+        "to_date": to_date,
+    }
+
+    async with httpx.AsyncClient(timeout=_EXPENSELM_TIMEOUT) as client: 
+        r = await client.get(
+                api_endpoint, 
+                headers=_get_headers(),
+                params=search_params
+            )
+        
+        r.raise_for_status()
+
+        # The response is a raw integer, so we read the text and cast it to int.
+        # Using r.text instead of r.json()
+        expense_count = int(r.text)
+
+    return expense_count
 
 def main():
     """Main entry point for the ExpenseLM MCP service."""
